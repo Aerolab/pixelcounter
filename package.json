@@ -1,0 +1,13 @@
+{
+  "name": "pixelcounter",
+  "version": "1.0.0",
+  "description": "Count amount of pixels of images in a directory",
+  "main": "count.js",
+  "dependencies": {
+    "image-size": "^0.3.5",
+    "stdio": "^0.2.7",
+    "walk": "^2.3.9"
+  },
+  "author": "Sergio Behrends (Aerolab)",
+  "license": "MIT"
+}
