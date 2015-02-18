@@ -6,6 +6,10 @@ We use it in http://aerolab.co/culture <3
 # Usage as Module
 
 ```
+npm install pixelcounter --save
+```
+
+```
 var pixelCounter = require('pixelcounter');
 console.log(pixelCounter.availableFormats());
 pixelCounter.start(directory, scanFormats, showProgress, onEnd);

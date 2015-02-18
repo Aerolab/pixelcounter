@@ -1,5 +1,5 @@
 var	stdio = require('stdio'),
-	pixelCounter = require('./count.js');
+	pixelCounter = require('./count.js'); // Using as npm can be replaced to var pixelCounter = require('pixelcounter');
 
 var printMsg = function(msg,enter) {
 	if (enter) {
