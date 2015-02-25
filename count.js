@@ -25,7 +25,7 @@ var startCounter = function(dir, scanFormats, onCount, onEnd) {
 		var ext = path.extname(stat.name).split('.');
 		var ext = ext[ext.length - 1];
 
-		if (scanFormats.indexOf(ext.toLowerCase()) > 0) {
+		if (scanFormats.indexOf(ext.toLowerCase()) >= 0) {
 
 			sizeOf(root + '/' + stat.name, function (err, dimensions) {
 				if (!err && typeof dimensions.width == "number" && typeof dimensions.height == "number") {
