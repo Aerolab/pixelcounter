@@ -1,58 +1,78 @@
-var fs = require('fs'),
-	sizeOf = require('image-size'),
-	path = require('path'),
-	walk = require('walk');
+'use strict';
 
+var fs     = require('fs'),
+    sizeOf = require('image-size'),
+    path   = require('path'),
+    walk   = require('walk');
 
 var availableFormats = function() {
-	return ['bmp', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'webp', 'svg'];
-}
+  return ['bmp', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'webp', 'svg'];
+};
 
 var startCounter = function(dir, scanFormats, onCount, onEnd) {
-	var pixels = 0;
-	if (scanFormats.length == 0) {
-		// If no format defined use all available
-		scanFormats = availableFormats();
-	}
-	if (!dir) {
-		// Set defautl folder in script path
-		dir = process.cwd();
-	}
+  var walker;
+  var pixels = 0;
+  var dirsProcessed = 0;
 
-	var walker  = walk.walk(dir, { followLinks: true });
+  // If no format defined use all available
+  if (scanFormats.length == 0) {
+    scanFormats = availableFormats();
+  }
 
-	walker.on('file', function(root, stat, next) {
-		var ext = path.extname(stat.name).split('.');
-		var ext = ext[ext.length - 1];
+  // Set defautl folder in script path
+  if (!dir) {
+    dir = process.cwd();
+  }
+  // If dir is not array, create one
+  if ( !Array.isArray(dir) ) {
+    dir = [dir];
+  }
 
-		if (scanFormats.indexOf(ext.toLowerCase()) >= 0) {
+  // For Array dir
+  dir.forEach(function (file) {
 
-			sizeOf(root + '/' + stat.name, function (err, dimensions) {
-				if (!err && typeof dimensions.width == "number" && typeof dimensions.height == "number") {
-					var filePixelsArea = dimensions.width*dimensions.height;
-					pixels += filePixelsArea;
+    walker  = walk.walk(file, { followLinks: true });
 
-					// Partial counting
-					onCount(root + '/' + stat.name, filePixelsArea, pixels);
+    // File
+    walker.on('file', function(root, stat, next) {
+      var ext = path.extname(stat.name).split('.');
+          ext = ext.pop();
 
-					// Go next file
-					next();
-				} else {
-					next();
-				}
-			});
-			
-		} else {
-			next();
-		}
-	});
+      if (scanFormats.indexOf(ext.toLowerCase()) >= 0) {
+        sizeOf(root + '/' + stat.name, function (err, dimensions) {
+          if (!err && typeof dimensions.width == "number" && typeof dimensions.height == "number") {
+            var filePixelsArea = dimensions.width*dimensions.height;
+            pixels += filePixelsArea;
 
-	walker.on('end', function() {
-		onEnd(pixels);
-	});
-}
+            // Partial counting
+            onCount(root + '/' + stat.name, filePixelsArea, pixels);
+
+            // Go next file
+            next();
+          } else {
+            next();
+          }
+        });
+
+      } else {
+        next();
+      }
+
+    });
+
+    // On end
+    walker.on('end', function() {
+      dirsProcessed++;
+      if ( dirsProcessed >= dir.length ) {
+        onEnd(pixels);
+      }
+    });
+
+  });
+
+};
 
 module.exports = {
-	availableFormats: availableFormats,
-	start: startCounter
-}
+  availableFormats: availableFormats,
+  start: startCounter
+};
