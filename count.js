@@ -1,58 +1,68 @@
-var fs = require('fs'),
-	sizeOf = require('image-size'),
-	path = require('path'),
-	walk = require('walk');
+'use strict';
+
+var fs     = require('fs'),
+    sizeOf = require('image-size'),
+    path   = require('path'),
+    walk   = require('walk');
 
 
 var availableFormats = function() {
 	return ['bmp', 'gif', 'jpg', 'jpeg', 'png', 'psd', 'tiff', 'webp', 'svg'];
-}
+};
 
 var startCounter = function(dir, scanFormats, onCount, onEnd) {
 	var pixels = 0;
-	if (scanFormats.length == 0) {
+  if (scanFormats.length == 0) {
 		// If no format defined use all available
 		scanFormats = availableFormats();
 	}
 	if (!dir) {
 		// Set defautl folder in script path
-		dir = process.cwd();
+		dir = [process.cwd()];
 	}
+  if ( Array.isArray(dir) ) {
 
-	var walker  = walk.walk(dir, { followLinks: true });
+    var walker;
+    // For Array dir
+    dir.forEach(function (file) {
+      walker  = walk.walk(file, { followLinks: true });
+      // File
+      walker.on('file', function(root, stat, next) {
+        var ext = path.extname(stat.name).split('.');
+            ext = ext.pop();
 
-	walker.on('file', function(root, stat, next) {
-		var ext = path.extname(stat.name).split('.');
-		var ext = ext[ext.length - 1];
+        if (scanFormats.indexOf(ext.toLowerCase()) >= 0) {
+          sizeOf(root + '/' + stat.name, function (err, dimensions) {
+            if (!err && typeof dimensions.width == "number" && typeof dimensions.height == "number") {
+              var filePixelsArea = dimensions.width*dimensions.height;
+              pixels += filePixelsArea;
 
-		if (scanFormats.indexOf(ext.toLowerCase()) >= 0) {
+              // Partial counting
+              onCount(root + '/' + stat.name, filePixelsArea, pixels);
 
-			sizeOf(root + '/' + stat.name, function (err, dimensions) {
-				if (!err && typeof dimensions.width == "number" && typeof dimensions.height == "number") {
-					var filePixelsArea = dimensions.width*dimensions.height;
-					pixels += filePixelsArea;
+              // Go next file
+              next();
+            } else {
+              next();
+            }
+          });
 
-					// Partial counting
-					onCount(root + '/' + stat.name, filePixelsArea, pixels);
+        } else {
+          next();
+        }
 
-					// Go next file
-					next();
-				} else {
-					next();
-				}
-			});
-			
-		} else {
-			next();
-		}
-	});
+      });
+    });
 
-	walker.on('end', function() {
-		onEnd(pixels);
-	});
-}
+  	walker.on('end', function() {
+  		onEnd(pixels);
+  	});
+
+  }
+
+};
 
 module.exports = {
 	availableFormats: availableFormats,
-	start: startCounter
-}
+  start: startCounter
+};
